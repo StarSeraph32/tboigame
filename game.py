@@ -21,6 +21,30 @@ moveleft = False
 coords = canvas.coords(playerCharacter)
 interactionText = None
 interactionTextRect = None
+ROLES = ['monster', 'shop']
+
+class Interaction:
+    question = ''
+    answer = ''
+    def __init__(self, q, a):
+        self.question = q
+        self.answer = a
+
+class NonPlayerCharacter:
+    role = ''
+    interactions = []
+    def __init__(self, x1, y1, x2, y2, role, interactions):
+        self.role = role
+        self.x1 = x1
+        self.x2 = x2
+        self.y1 = y1
+        self.y2 = y2        
+        self.interactions = interactions
+
+npcMonster = NonPlayerCharacter(0, 0, 150, 100, 'monster')
+npcShop = NonPlayerCharacter(1, 2, 3, 4, 'shop')
+npcs = [npcMonster, npcShop]
+
 
 #create a timer to use for various things
 def clock(time):
@@ -52,11 +76,12 @@ def keyrelease(event):    #Keyrelease detector
     if event.keysym == "a":
         moveleft = False
 def movement():     #Moves the player depending on their keypresses
-    global coords,playerCharacter,moveup,movedown,moveright,moveleft
+    global coords,playerCharacter,moveup,movedown,moveright,moveleft,interactionText
     if isDrown:
         return
+    #rectCoords = canvas.coords(interactionTextRect)
     coords = canvas.coords(playerCharacter)
-    if coords[1] != 20:
+    if coords[1] != 20:# or rectCoords[1] <= 0:
         if moveup:
             canvas.move(playerCharacter,0,-2)
             if interactionText != None:
@@ -106,26 +131,38 @@ def drown():
         curr_coords = canvas.coords(playerCharacter)
         canvas.move(playerCharacter, 100 - curr_coords[0], 350 - curr_coords[1])
         canvas.itemconfig(playerCharacter, state = NORMAL)
-def checkInteraction(npcCoordsX1,npcCoordsY1,npcCoordsX2,npcCoordsY2):
-    global coords, interactionText,moveleft
-    cornerDetect1 = False
-    cornerDetect2 = False
-    if coords[0] >= npcCoordsX1 and coords[0] >= npcCoordsY1:
-        cornerDetect1 = True
-    elif interactionText != None and coords[0] < npcCoordsX1 and coords[0] < npcCoordsY1:
-        cornerDetect1 = False
-    if coords[0] <= npcCoordsX2 and coords[1] <= npcCoordsY2:
-        cornerDetect2 = True
-    elif interactionText != None and coords[0] > npcCoordsX2 and coords[1] > npcCoordsY2:
-        cornerDetect2 = False
-    if cornerDetect1 and cornerDetect2 and interactionText == None:
-        interactionText = canvas.create_text(coords[0],coords[1],text='PRESS SPACE TO INTERACT',fill='black')
-        interactionTextRect = (canvas.create_rectangle(canvas.bbox(interactionText),fill='white'))
-    elif not (cornerDetect1 and cornerDetect2) and interactionText != None:
-        canvas.delete(interactionText)
-        interactionText = None
+def checkInteraction():
+    global coords, interactionText, interactionTextRect, npcs
 
-    
+    for npc in npcs:
+        npcCoordsX1 = npc.x1
+        npcCoordsX2 = npc.x2
+        npcCoordsY1 = npc.y1
+        npcCoordsY2 = npc.y2
+
+        cornerDetect1 = False
+        cornerDetect2 = False
+        if coords[0] >= npcCoordsX1 and coords[0] >= npcCoordsY1:
+            cornerDetect1 = True
+        elif interactionText != None and coords[0] < npcCoordsX1 and coords[0] < npcCoordsY1:
+            cornerDetect1 = False
+        if coords[0] <= npcCoordsX2 and coords[1] <= npcCoordsY2:
+            cornerDetect2 = True
+        elif interactionText != None and coords[0] > npcCoordsX2 and coords[1] > npcCoordsY2:
+            cornerDetect2 = False
+        if cornerDetect1 and cornerDetect2 and interactionText == None:
+            interactionText = canvas.create_text(coords[0],coords[1]-30,text='PRESS SPACE TO INTERACT',fill='black')
+            interactionTextRect = (canvas.create_rectangle(canvas.bbox(interactionText),fill='white'))
+            canvas.tag_raise(interactionText)
+
+            npc.role
+
+        elif not (cornerDetect1 and cornerDetect2) and interactionText != None:
+            canvas.delete(interactionText)
+            canvas.delete(interactionTextRect)
+            interactionText = None
+
+
 #Different weapon classes
 #class Sword:
  #   miss = 0
@@ -136,7 +173,7 @@ def checkInteraction(npcCoordsX1,npcCoordsY1,npcCoordsX2,npcCoordsY2):
   #      self.defence = defence
   #      self.distance = distance
 
-class Gun:
+'''class Gun:
     attack = 4
     fireRate = 100
     defence = 1
@@ -153,11 +190,13 @@ class Bow:
     fireRate = 50
     defence = 2
     distance = 15
-    miss = 5
+    miss = 5'''
+
+
 while True:
     movement()
     drown()
-    checkInteraction(0,0,50,100)
+    checkInteraction()
     myTk.update()
     time.sleep(0.015)
 myTk.destroy()
